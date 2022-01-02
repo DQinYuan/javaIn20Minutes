@@ -1,0 +1,12 @@
+String a = "test1";
+
+Runnable printA = () -> {
+    assert "test1".equals(a);
+    System.out.println(a);
+}
+
+printA.run();
+
+a = "test2";
+
+printA.run();

@@ -1,0 +1,5 @@
+Function f = (int a) -> {
+    return (int b) -> a+b;
+};
+
+return f.apply(1).apply(2);
