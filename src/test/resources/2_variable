@@ -1,4 +1,6 @@
-int a = 10;
+int a = 9;
+
+a = 10;
 
 int b = a + 1;
 

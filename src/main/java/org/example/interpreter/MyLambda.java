@@ -33,7 +33,7 @@ public class MyLambda {
         for (int i = 0; i < arguments.size(); i++) {
             Value argI = arguments.get(i);
             VarDecl paramIDef = lambdaDefine.getParameters().get(i);
-            context.put(paramIDef.getTarget().getKeyToken().getLexeme(), argI);
+            context.put(paramIDef.getTarget().getKeyToken().getLexeme(), new LeftValue(argI.get()));
         }
         ScopeStack lambdaExecuteScope = new ScopeStack(context, scope);
         return astExecutor.executeLambdaBody(lambdaDefine, lambdaExecuteScope);

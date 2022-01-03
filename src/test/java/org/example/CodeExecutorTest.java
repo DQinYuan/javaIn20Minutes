@@ -41,6 +41,21 @@ public class CodeExecutorTest {
         assertEquals(3, res);
     }
 
+    /**
+     * 值传递测试
+     * @throws IOException
+     * @throws URISyntaxException
+     */
+    @Test
+    public void passByValueTest() throws IOException, URISyntaxException {
+        executeFile("5_pass_by_value");
+    }
+
+    @Test
+    public void closureBugTest() throws IOException, URISyntaxException {
+        executeFile("6_closure_bug");
+    }
+
     private Object executeFile(String fileName) throws IOException, URISyntaxException {
         String script = getContentFromClassPath(fileName);
         return CodeExecutor.execute(script);

@@ -1,6 +1,5 @@
 package org.example;
 
-import org.example.tree.AssignStmt;
 import org.example.tree.LambdaExpr;
 import org.example.tree.PrintlnStmt;
 import org.example.tree.VarDecl;
@@ -58,10 +57,22 @@ public class Parser {
             return printlnStmt();
         } else if (matchAndAdvance(TokenType.TYPE)) {
             return varDeclStmt();
-        } else if (matchAndAdvance(TokenType.ID)) {
-            return assignStmt();
+        } else {
+            Expr expr = expr();
+            advanceOrReportError(TokenType.SEMI, "statement must end with ';'");
+            return expr;
         }
-        throw new RuntimeException(ErrorReporter.report(pre.getLine(), pre.getCol(), "invalid statement"));
+    }
+
+    private Stmt returnStmt() {
+        Token keyToken = pre;
+        if (matchAndAdvance(TokenType.SEMI)) {
+            return new Return(keyToken, null);
+        }
+
+        Expr expr = expr();
+        advanceOrReportError(TokenType.SEMI, "return statement must end with ';'");
+        return new Return(keyToken, expr);
     }
 
     private PrintlnStmt printlnStmt() {
@@ -70,14 +81,6 @@ public class Parser {
         Expr expr = expr();
         advanceOrReportError(TokenType.SEMI, "return statement must end with ';'");
         return new PrintlnStmt(keyToken, expr);
-    }
-
-    private Stmt assignStmt() {
-        Token target = pre;
-        advanceOrReportError(TokenType.ASSIGN, "invalid assign statement");
-        Expr expr = expr();
-        advanceOrReportError(TokenType.SEMI, "expect ';'");
-        return new AssignStmt(target, target, expr);
     }
 
     private Stmt varDeclStmt() {
@@ -107,17 +110,6 @@ public class Parser {
         } else {
             return new IfStmt(keyToken, condition, thenBranch, null);
         }
-    }
-
-    private Stmt returnStmt() {
-        Token keyToken = pre;
-        if (matchAndAdvance(TokenType.SEMI)) {
-            return new Return(keyToken, null);
-        }
-
-        Expr expr = expr();
-        advanceOrReportError(TokenType.SEMI, "return statement must end with ';'");
-        return new Return(keyToken, expr);
     }
 
     private IdPrimary idOrReportError(String reason) {
@@ -259,17 +251,6 @@ public class Parser {
         return arguments;
     }
 
-    private static Expr unary(Parser parser, int currentPrecedence) {
-        Token opToken = parser.pre;
-        Expr expr = parser.parsePrecedence(currentPrecedence + 1);
-        return new UnaryOp(opToken, opToken, expr);
-    }
-
-    private static Expr binary(Parser parser, Expr left, int currentPrecedence) {
-        Token opToken = parser.pre;
-        return new BinaryOp(opToken, left, opToken, parser.parsePrecedence(currentPrecedence + 1));
-    }
-
     private static Expr numberOrStrPrimary(Parser parser, int currentPrecedence) {
         return new LiteralPrimary(parser.pre, parser.pre.getLiteral());
     }
@@ -293,7 +274,7 @@ public class Parser {
         // 前看一个字符
         if (!isEnd() && cur.getType() == TokenType.LPAREN) {
             Token next = scanner.next();
-            if (next != null && next.getType() == TokenType.TYPE) {
+            if (next != null && (next.getType() == TokenType.TYPE || next.getType() == TokenType.RPAREN)) {
                 // lambda 表达式
                 scanner.giveBack(next);
                 advance();
@@ -305,6 +286,40 @@ public class Parser {
         }
 
         return parsePrecedence(ExprParseRule.PREC_ASSIGN);
+    }
+
+    private static Expr unary(Parser parser, int currentPrecedence) {
+        Token opToken = parser.pre;
+        Expr expr = parser.parsePrecedence(currentPrecedence + 1);
+        return new UnaryOp(opToken, opToken, expr);
+    }
+
+    private static Expr binary(Parser parser, Expr left, int currentPrecedence) {
+        Token opToken = parser.pre;
+        return new BinaryOp(opToken, left, opToken, parser.parsePrecedence(currentPrecedence + 1));
+    }
+
+    private Expr parsePrecedence(int precedence) {
+        if (isEnd()) {
+            throw new RuntimeException(ErrorReporter.report(pre.getLine(), pre.getCol(),
+                    "invalid expression"));
+        }
+        ExprParseRule exprParseRule = parseRuleMap.get(cur.getType());
+        UnaryRule unaryRule = exprParseRule.getUnaryRule();
+        if (unaryRule == null) {
+            throw new RuntimeException(ErrorReporter.report(pre.getLine(), pre.getCol(),
+                    "invalid expression"));
+        }
+
+        advance();
+        Expr left = unaryRule.parse(this, exprParseRule.getPrecedence());
+
+        while (gePrecedenceAndAdvance(precedence)) {
+            ExprParseRule inExprParseRule = parseRuleMap.get(pre.getType());
+            BinaryRule binaryRule = inExprParseRule.getBinaryRule();
+            left = binaryRule.parse(this, left, inExprParseRule.getPrecedence());
+        }
+        return left;
     }
 
     private LambdaExpr lambdaExpr() {
@@ -339,29 +354,6 @@ public class Parser {
             exprBody = expr();
         }
         return new LambdaExpr(lambdaKeyToken, params, blockBody, exprBody);
-    }
-
-    private Expr parsePrecedence(int precedence) {
-        if (isEnd()) {
-            throw new RuntimeException(ErrorReporter.report(pre.getLine(), pre.getCol(),
-                    "invalid expression"));
-        }
-        ExprParseRule exprParseRule = parseRuleMap.get(cur.getType());
-        UnaryRule unaryRule = exprParseRule.getUnaryRule();
-        if (unaryRule == null) {
-            throw new RuntimeException(ErrorReporter.report(pre.getLine(), pre.getCol(),
-                    "invalid expression"));
-        }
-
-        advance();
-        Expr left = unaryRule.parse(this, exprParseRule.getPrecedence());
-
-        while (gePrecedenceAndAdvance(precedence)) {
-            ExprParseRule inExprParseRule = parseRuleMap.get(pre.getType());
-            BinaryRule binaryRule = inExprParseRule.getBinaryRule();
-            left = binaryRule.parse(this, left, inExprParseRule.getPrecedence());
-        }
-        return left;
     }
 
     private boolean gePrecedenceAndAdvance(int precedence) {

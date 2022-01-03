@@ -58,7 +58,7 @@ public class Scanner {
                 case '-':
                     return matchAndAdvance('>')?
                                     newToken(TokenType.ARROW, "->"):
-                                    newToken(TokenType.ADD, "-");
+                                    newToken(TokenType.SUB, "-");
                 case '*':
                     return newToken(TokenType.MUL, "*");
                 case '/':

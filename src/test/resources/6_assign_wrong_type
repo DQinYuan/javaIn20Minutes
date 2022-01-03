@@ -1,5 +1,0 @@
-int a = 12;
-String b = "bb";
-int c = a + 2;
-// 赋值类型错误
-b = c - 10;

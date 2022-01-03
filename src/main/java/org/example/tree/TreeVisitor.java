@@ -4,8 +4,6 @@ public interface TreeVisitor<R> {
 
     R visitProgram(Program program);
 
-    R visitAssignStmt(AssignStmt assignStmt);
-
     R visitBinaryOp(BinaryOp binaryOp);
 
     R visitBlock(Block block);

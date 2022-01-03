@@ -1,6 +1,5 @@
 package org.example;
 
-import org.example.tree.AssignStmt;
 import org.example.tree.BinaryOp;
 import org.example.tree.Block;
 import org.example.tree.Expr;
@@ -34,16 +33,6 @@ public class AstPrinter implements TreeVisitor<Void> {
         for (Stmt stmt : program.getStmtList()) {
             stmt.accept(this);
         }
-        return null;
-    }
-
-    @Override
-    public Void visitAssignStmt(AssignStmt assignStmt) {
-        printByCurDepth(assignStmt.getClass().getSimpleName());
-        depth++;
-        printByCurDepth(assignStmt.getTarget().getLexeme());
-        assignStmt.getExpr().accept(this);
-        depth--;
         return null;
     }
 

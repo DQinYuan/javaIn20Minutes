@@ -1,0 +1,9 @@
+String a = "test1";
+
+Function printA = () -> {
+    Function returnA = () -> a;
+    String a = "test2";
+    return returnA;
+};
+
+println printA.apply().apply();

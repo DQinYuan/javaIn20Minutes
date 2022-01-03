@@ -1,6 +1,0 @@
-Function f = (int a) -> {
-    return (int b) -> a+b;
-}
-
-// 类型错误
-String b = f.apply(1).apply(2);

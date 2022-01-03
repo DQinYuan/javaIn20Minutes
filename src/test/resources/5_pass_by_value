@@ -1,0 +1,8 @@
+Function f = (int b) -> {
+    b = 10;
+    return 1;
+};
+
+int a = 1;
+int c = f.apply(a);
+println a;

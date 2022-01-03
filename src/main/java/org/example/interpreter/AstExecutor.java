@@ -1,9 +1,6 @@
 package org.example.interpreter;
 
 import org.example.ErrorReporter;
-import org.example.Token;
-import org.example.TokenType;
-import org.example.tree.AssignStmt;
 import org.example.tree.BinaryOp;
 import org.example.tree.Block;
 import org.example.tree.Expr;
@@ -44,24 +41,20 @@ public class AstExecutor implements TreeVisitor<TreeNodeResult> {
     }
 
     @Override
-    public TreeNodeResult visitAssignStmt(AssignStmt assignStmt) {
-        Token targetToken = assignStmt.getTarget();
-        String variableName = targetToken.getLexeme();
-        TreeNodeResult exprResult = assignStmt.getExpr().accept(this);
-        Value variable = currentScope.getVariableValue(variableName);
-        if (variable == null) {
-            throw new RuntimeException(ErrorReporter.report(targetToken.getLine(), targetToken.getCol(),
-                    "not define variable " + variableName));
-        }
-        variable.set(exprResult.getValueObj());
-        return exprResult;
-    }
-
-    @Override
     public TreeNodeResult visitBinaryOp(BinaryOp binaryOp) {
         Object leftResult = binaryOp.getLeft().accept(this).getValueObj();
         Object rightResult = binaryOp.getRight().accept(this).getValueObj();
         switch (binaryOp.getOp().getType()) {
+            case ASSIGN:
+                Value leftRes = binaryOp.getLeft().accept(this).getValue();
+                if (!(leftRes instanceof LeftValue)) {
+                    throw new RuntimeException(ErrorReporter.report(binaryOp.getOp().getLine(),
+                            binaryOp.getOp().getCol(), "can not assign value to "
+                                    + binaryOp.getLeft().getKeyToken().getLexeme()));
+                }
+                Object value = binaryOp.getRight().accept(this).getValueObj();
+                leftRes.set(value);
+                return TreeNodeResult.newResultWithValue(value);
             case ADD:
                 if (leftResult instanceof Number && rightResult instanceof Number) {
                     // 数字运算
@@ -118,12 +111,15 @@ public class AstExecutor implements TreeVisitor<TreeNodeResult> {
 
     @Override
     public TreeNodeResult visitBlock(Block block) {
+        currentScope = new ScopeStack(new HashMap<>(),
+                currentScope);
         for (Stmt stmt : block.getStmtList()) {
             TreeNodeResult stmtRes = stmt.accept(this);
             if (stmtRes.isRet()) {
                 return stmtRes;
             }
         }
+        currentScope = currentScope.pop();
         return TreeNodeResult.NULL_RESULT;
     }
 
