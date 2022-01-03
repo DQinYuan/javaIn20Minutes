@@ -160,6 +160,9 @@ public class Scanner {
                         case '"':
                             literalBuilder.append('"');
                             break;
+                        default:
+                            throw new RuntimeException(ErrorReporter
+                                    .report(currentLine, currentCol, "invalid escape"))
                     }
             }
         }
