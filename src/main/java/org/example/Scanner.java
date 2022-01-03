@@ -162,7 +162,7 @@ public class Scanner {
                             break;
                         default:
                             throw new RuntimeException(ErrorReporter
-                                    .report(currentLine, currentCol, "invalid escape"))
+                                    .report(currentLine, currentCol, "invalid escape"));
                     }
             }
         }
