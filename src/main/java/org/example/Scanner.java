@@ -223,7 +223,7 @@ public class Scanner {
                     }
                     continue;
                 case numTypePart:
-                    if (isInVisible(cur)) {
+                    if (isInVisible(cur) || SplitCharsSet.isSplitChar(cur)) {
                         state = end;
                     } else {
                         numberBuilder.append(cur);
